@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "elastic-apm-node": "^4.15.0",
+    "sqlite3": "^5.1.7"
+  },
+  "name": "isca",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
