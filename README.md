@@ -37,8 +37,8 @@ Em caso de duvidas ou sugestões, fique à vontade para me chamar em um dos cont
 
 
 <!-- CONTACT -->
-## Contato
 
-- Linkedin: [Michael Fortes](https://www.linkedin.com/in/mikefortes/)
+# Social
+[<img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" />](https://mromeiro-f.medium.com)  [<img src="https://img.shields.io/badge/linkedin-%230077B5.svg?&style=for-the-badge&logo=linkedin&logoColor=white" />](https://www.linkedin.com/in/mikefortes/)   [<img src="https://img.shields.io/badge/dev.to-0A0A0A?style=for-the-badge&logo=dev.to&logoColor=white"/>](https://dev.to/mromeiro-f) [<img src="https://img.shields.io/badge/Hashnode-%232962FF.svg?style=for-the-badge&logo=hashnode&logoColor=white"/>](https://mromeiro-f.hashnode.dev)
 - Email: mromeiro.f@gmail.com
 
