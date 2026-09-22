@@ -21,7 +21,7 @@ Entenda, base sólida é entender... não necessariamente saber meter a mão na 
 
 Daqui, eu partiria do principio basico:
 
-1. Monitoramento de Infra (redes)
+1. [Monitoramento de Infra (redes)](https://github.com/MikeFortes/how-to-observability/tree/main/material/Infraestrutura)
 2. Monitoramento de Infra (Servidores)
 3. Monitoramento de Infra (Banco de dados)
 4. Monitoramento de Aplicações essenciais (Docker, Kubernets, Integrações, etc)
