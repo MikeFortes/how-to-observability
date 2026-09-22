@@ -1,12 +1,32 @@
 services:
+
   hello-app:
     build: .
     container_name: hello-app
+
     ports:
       - "3005:3005"
+
+    environment:
+      DATA_DIR: /app/data
+
     volumes:
-      - hello-data:/app/data
+      - ./data:/app/data
+
     restart: unless-stopped
 
-volumes:
-  hello-data:
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+
+    ports:
+      - "3001:3001"
+
+    volumes:
+      - ./kuma-data:/app/data
+
+    depends_on:
+      - hello-app
+
+    restart: unless-stopped

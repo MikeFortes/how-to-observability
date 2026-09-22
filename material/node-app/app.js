@@ -1,17 +1,48 @@
-// 🔥 APM TEM QUE SER A PRIMEIRA LINHA
+// 🔥 APM TEM QUE SER A PRIMEIRA COISA CARREGADA
 const apm = require('elastic-apm-node').start({
   serviceName: 'hello-app',
-  serverUrl: 'ip-do-seu-elastic',
-  environment: 'development'
+  serverUrl: process.env.ELASTIC_APM_SERVER_URL || 'ip-do-seu-elastic',
+  environment: process.env.NODE_ENV || 'development'
 });
 
 const http = require('http');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
 
-// 📁 Banco local (cria automaticamente)
-const db = new sqlite3.Database('./database.db');
 
-// 🧱 Criar tabela se não existir
+// =====================================================
+// 📁 SQLITE
+// =====================================================
+
+// Docker:
+// DATA_DIR=/app/data
+//
+// Fora do Docker:
+// usa automaticamente ./data
+const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+
+// Cria a pasta caso ainda não exista
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.join(dataDir, 'database.db');
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('❌ Erro ao abrir SQLite:', err.message);
+    return;
+  }
+
+  console.log(`✅ SQLite conectado: ${dbPath}`);
+});
+
+
+// =====================================================
+// 🧱 CRIA TABELA
+// =====================================================
+
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -21,64 +52,167 @@ db.serialize(() => {
   `);
 });
 
+
+// =====================================================
+// 🌐 SERVIDOR HTTP
+// =====================================================
+
 const server = http.createServer((req, res) => {
 
-  // ❤️ Health check (pro Kuma)
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+
+
+  // ===================================================
+  // ❤️ HEALTH CHECK
+  // ===================================================
+
   if (req.url === '/health') {
-    res.writeHead(200);
+    res.writeHead(200, {
+      'Content-Type': 'text/plain'
+    });
+
     return res.end('OK');
   }
 
-  // ➕ Inserir usuário
+
+  // ===================================================
+  // ➕ INSERIR USUÁRIO
+  // ===================================================
+
   if (req.url === '/add') {
 
-    const span = apm.startSpan('INSERT user', 'db', 'sqlite', 'query');
+    const span = apm.startSpan(
+      'INSERT user',
+      'db',
+      'sqlite',
+      'query'
+    );
 
-    db.run("INSERT INTO users (name) VALUES (?)", ["Jessyka"], (err) => {
-      if (span) span.end();
+    db.run(
+      'INSERT INTO users (name) VALUES (?)',
+      ['Jessyka'],
+      (err) => {
 
-      if (err) {
-        res.writeHead(500);
-        return res.end('Erro ao inserir');
+        if (span) {
+          span.end();
+        }
+
+        if (err) {
+          console.error('❌ Erro no INSERT:', err);
+
+          res.writeHead(500, {
+            'Content-Type': 'text/plain'
+          });
+
+          return res.end('Erro ao inserir');
+        }
+
+        res.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+
+        res.end('User added');
       }
-
-      res.writeHead(200);
-      res.end('User added');
-    });
+    );
 
     return;
   }
 
-  // 📄 Listar usuários
+
+  // ===================================================
+  // 📄 LISTAR USUÁRIOS
+  // ===================================================
+
   if (req.url === '/list') {
 
-    const span = apm.startSpan('SELECT users', 'db', 'sqlite', 'query');
+    const span = apm.startSpan(
+      'SELECT users',
+      'db',
+      'sqlite',
+      'query'
+    );
 
-    db.all("SELECT * FROM users", [], (err, rows) => {
-      if (span) span.end();
+    db.all(
+      'SELECT * FROM users',
+      [],
+      (err, rows) => {
 
-      if (err) {
-        res.writeHead(500);
-        return res.end('Erro no banco');
+        if (span) {
+          span.end();
+        }
+
+        if (err) {
+          console.error('❌ Erro no SELECT:', err);
+
+          res.writeHead(500, {
+            'Content-Type': 'text/plain'
+          });
+
+          return res.end('Erro no banco');
+        }
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json'
+        });
+
+        res.end(JSON.stringify(rows));
       }
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(rows));
-    });
+    );
 
     return;
   }
 
-  // 💥 Teste de erro (vai pro APM)
+
+  // ===================================================
+  // 💥 GERAR ERRO PARA TESTAR APM
+  // ===================================================
+
   if (req.url === '/error') {
-    throw new Error('Erro de teste com banco');
+
+    const error = new Error('Erro de teste com banco');
+
+    apm.captureError(error);
+
+    res.writeHead(500, {
+      'Content-Type': 'text/plain'
+    });
+
+    return res.end('Erro de teste enviado para o APM');
   }
 
-  // 🚀 Rota principal
-  res.writeHead(200);
+
+  // ===================================================
+  // 🚀 ROTA PRINCIPAL
+  // ===================================================
+
+  res.writeHead(200, {
+    'Content-Type': 'text/plain'
+  });
+
   res.end('Hello OK');
 });
 
-server.listen(3005, '0.0.0.0', () => {
-  console.log('Servidor rodando com SQLite + APM 🚀');
+
+// =====================================================
+// 🚀 START
+// =====================================================
+
+const PORT = process.env.PORT || 3005;
+
+server.listen(PORT, '0.0.0.0', () => {
+
+  console.log('');
+  console.log('======================================');
+  console.log('🚀 HELLO-APP INICIADO');
+  console.log('======================================');
+  console.log(`🌐 Porta: ${PORT}`);
+  console.log(`📦 SQLite: ${dbPath}`);
+  console.log(`📊 APM: ${process.env.ELASTIC_APM_SERVER_URL || 'ip-do-seu-elastic'}`);
+  console.log('');
+  console.log('Rotas disponíveis:');
+  console.log('❤️  /health');
+  console.log('➕ /add');
+  console.log('📄 /list');
+  console.log('💥 /error');
+  console.log('======================================');
 });
