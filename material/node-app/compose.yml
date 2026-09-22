@@ -1,0 +1,12 @@
+services:
+  hello-app:
+    build: .
+    container_name: hello-app
+    ports:
+      - "3005:3005"
+    volumes:
+      - hello-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  hello-data:
